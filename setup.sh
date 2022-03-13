@@ -36,7 +36,7 @@ read -p "Enter hostname [${hostname}]: " hostname
 
 while ! [[ "$masterplane" =~ ^(y|n)$ ]] 
 do
-    read -p "Is this a master plane node? [y/n]: " masterplane
+    read -p "Are you creating a new cluster? [y/n]: " masterplane
 done 
 
 # find the right IP for the cluster

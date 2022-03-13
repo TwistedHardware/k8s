@@ -65,9 +65,6 @@ echo Your Hostname: $hostname
 echo Masterplace: $masterplane
 echo "ClusterIP: $ip"
 
-
-exit
-
 if [[ "$hostname" != '' ]]
 then
   echo $hostname > /etc/hostname

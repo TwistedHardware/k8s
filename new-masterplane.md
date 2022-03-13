@@ -1,9 +1,9 @@
 # This is how to setup extra masterplane nodes 
 
-First, ssh into a working master and run this command. Don't forget to replace `{USERNAME}` with the username from the new node.
+First, ssh into a working master and run this command. Don't forget to replace `{USERNAME}` with the username from the new node and `{IP}` with the IP of the new node.
 
 ```
-sudo scp -r /etc/kubernetes/pki {USERNAME}@192.168.0.201:/home/{USERNAME}/
+sudo scp -r /etc/kubernetes/pki {USERNAME}@{IP}:/home/{USERNAME}/
 ```
 
 Now ssh into the new node and run this:

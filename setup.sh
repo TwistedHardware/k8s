@@ -98,3 +98,13 @@ fi
 
 echo "Creating Kubernetes Cluster"
 kubeadm init --control-plane-endpoint $ip 
+
+export KUBECONFIG=/etc/kubernetes/admin.conf
+kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/aio/deploy/recommended.yaml
+kubectl apply -f https://raw.githubusercontent.com/TwistedHardware/k8s/main/dashboard-adminuser.yaml
+token=$(kubectl -n kubernetes-dashboard get secret $(kubectl -n kubernetes-dashboard get sa/admin-user -o jsonpath="{.secrets[0].name}") -o go-template="{{.data.token | base64decode}}")
+echo -e "\n Your token for Kubernetes Dashboard:\n\n"
+echo $token
+echo -e "\n\n"
+

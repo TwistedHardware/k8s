@@ -1,16 +1,19 @@
 # This is how to setup extra masterplane nodes 
 
-First, ssh into a working master and run this command. Don't forget to replace `{USERNAME}` with the username from the new node and `{IP}` with the IP of the new node.
+First, ssh into a working master and run this command.
 
 ```
-sudo scp -r /etc/kubernetes/pki {USERNAME}@{IP}:/home/{USERNAME}/
+sudo kubeadm init phase upload-certs --upload-certs
 ```
 
-Now ssh into the new node and run this:
+Copy the key and use it this command:
 
 ```
-sudo mv pki/ /etc/kubernetes/
-sudo chown root:root /etc/kubernetes/pki/
+kubeadm token create --print-join-command --certificate-key {KEY}
 ```
 
-Now you can join the the cluter from the node as a masterplane.
+Copy the command and ssh into the new node and run the command with `sudo`:
+
+```
+sudo kubeadm join {IP}:6443 --token XXX --discovery-token-ca-cert-hash sha256:XXX --control-plane --certificate-key XXX
+```

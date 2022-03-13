@@ -30,7 +30,7 @@ To add a worker nodes:
 
 ## Dashboard
 
-To see the dashboard, run this command (make sure you configured `kubectl` on your PC):
+To see the dashboard, run this command (make sure you [configured](#configure-kubectl) `kubectl` on your PC):
 
 ```
 kubectl proxy

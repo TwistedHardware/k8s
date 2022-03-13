@@ -66,6 +66,7 @@ echo "ClusterIP: $ip"
 if [[ "$hostname" != '' ]]
 then
   echo $hostname > /etc/hostname
+  sudo hostname $hostname
 fi
 
 

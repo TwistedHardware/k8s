@@ -6,6 +6,9 @@ On new nodes, run this command:
 wget -q https://raw.githubusercontent.com/TwistedHardware/k8s/main/setup.sh; chmod +x setup.sh; ./setup.sh; rm setup.sh
 ```
 
+NOTE: If you are creating a new cluster, There will be a token on the screen at the end of the setup. Save the generated token somewhere safe.
+
+
 ## Configure `kubectl`
 
 To configure a `kubectl` on a remote PC to access the cluster, ssh into a control plane node and run this command:
@@ -13,8 +16,6 @@ To configure a `kubectl` on a remote PC to access the cluster, ssh into a contro
 ```
 sudo cat /etc/kubernetes/admin.conf
 ```
-
-NOTE: If you are creating a new cluster, There will be a token on the screen at the end of the setup. Save the generated token somewhere safe.
 
 copy the output and save it on the remote PC in `~/.kube/config`
 

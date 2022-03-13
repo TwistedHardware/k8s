@@ -89,3 +89,12 @@ echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https:/
 sudo apt-get -qq update
 sudo apt-get -qq install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
+
+if [[ "$masterplane" == 'n' ]]
+then
+  echo Setup is complete. Now you can join the cluster
+  exit
+fi
+
+echo "Creating Kubernetes Cluster"
+kubeadm init --control-plane-endpoint $ip 

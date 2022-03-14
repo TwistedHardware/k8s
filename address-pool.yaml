@@ -9,4 +9,4 @@ data:
     - name: default
       protocol: layer2
       addresses:
-      - 103.101.44.17
+      - 103.101.44.17/32

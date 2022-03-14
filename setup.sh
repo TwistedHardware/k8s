@@ -70,8 +70,7 @@ then
 fi
 
 
-
-echo "Installing Docker..."
+echo -e "\n${BOLDGREEN}Installing Docker...${ENDCOLOR}"
 sudo apt-get -qq install -y ca-certificates curl gnupg lsb-release
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
@@ -82,8 +81,7 @@ sed -i 's/ExecStart=\/usr\/bin\/dockerd -H fd:\/\/ --containerd=\/run\/container
 sudo systemctl daemon-reload
 systemctl restart docker
 
-
-echo "Installing Kubernetes..."
+echo -e "\n${BOLDGREEN}Installing Kubernetes...${ENDCOLOR}"
 sudo apt-get -qq install -y apt-transport-https ca-certificates curl
 sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
 echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
@@ -97,15 +95,20 @@ then
   exit
 fi
 
-echo "Creating Kubernetes Cluster"
-kubeadm init --control-plane-endpoint $ip 
+echo -e "\n${BOLDGREEN}Creating Kubernetes Cluster...${ENDCOLOR}"
+kubeadm init --control-plane-endpoint $ip --pod-network-cidr=10.17.0.0/16 --service-cidr=10.18.0.0/16
 
 export KUBECONFIG=/etc/kubernetes/admin.conf
 #kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
 kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/aio/deploy/recommended.yaml
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/baremetal/deploy.yaml
-kubectl patch deployment ingress-nginx-controller -n ingress-nginx -p='{"spec":{"template":{"spec":{"hostNetwork":true}}}}'
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+#kubectl patch deployment ingress-nginx-controller -n ingress-nginx -p='{"spec":{"template":{"spec":{"hostNetwork":true}}}}'
+
+# MetalLB
+kubectl get configmap kube-proxy -n kube-system -o yaml | sed -e "s/strictARP: false/strictARP: true/" | kubectl apply -f - -n kube-system
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/namespace.yaml
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/metallb.yaml
 
 # create a user for dashboard
 kubectl apply -f https://raw.githubusercontent.com/TwistedHardware/k8s/main/dashboard-adminuser.yaml
@@ -113,4 +116,3 @@ token=$(kubectl -n kubernetes-dashboard get secret $(kubectl -n kubernetes-dashb
 echo -e "\n Your token for Kubernetes Dashboard:\n\n"
 echo $token
 echo -e "\n\n"
-

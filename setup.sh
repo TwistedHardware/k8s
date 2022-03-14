@@ -34,9 +34,9 @@ echo -e ""
 
 read -p "Enter hostname [${hostname}]: " hostname
 
-while ! [[ "$masterplane" =~ ^(y|n)$ ]] 
+while ! [[ "$newcluster" =~ ^(y|n)$ ]] 
 do
-    read -p "Are you creating a new cluster? [y/n]: " masterplane
+    read -p "Are you creating a new cluster? [y/n]: " newcluster
 done 
 
 # find the right IP for the cluster
@@ -48,7 +48,7 @@ do
   echo -e "${index}: ${ipList[$i]}"
    # do whatever on "$i" here
 done
-read -p "What is the IP that will used to access this cluster? [1]: " ip
+read -p "What is the IP that will used to k8s API? [1]: " ip
 
 if [[ "$ip" == '' ]]
 then
@@ -58,10 +58,19 @@ fi
 ip=$((ip-1))
 ip="${ipList[$ip]}"
 
-echo Your Hostname: $hostname
-echo Masterplace: $masterplane
-echo "ClusterIP: $ip"
+read -p "Enter a load balancer IP range [103.101.44.17/32]: " lb
 
+if [[ "$lb" == '' ]]
+then
+  lb="103.101.44.17/32"
+fi
+
+echo Your Hostname: $hostname
+echo K8s API IP: $ip
+echo Load Balaner IP Range: $lb
+echo "Create new Cluster: $newcluster"
+
+lb=$(echo $lb | sed -e "s/\//\\\\\//")
 
 if [[ "$hostname" != '' ]]
 then
@@ -89,7 +98,7 @@ sudo apt-get -qq update
 sudo apt-get -qq install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
 
-if [[ "$masterplane" == 'n' ]]
+if [[ "$newcluster" == 'n' ]]
 then
   echo Setup is complete. Now you can join the cluster
   exit
@@ -99,17 +108,17 @@ echo -e "\n${BOLDGREEN}Creating Kubernetes Cluster...${ENDCOLOR}"
 kubeadm init --control-plane-endpoint $ip --pod-network-cidr=10.17.0.0/16 --service-cidr=10.18.0.0/16
 
 export KUBECONFIG=/etc/kubernetes/admin.conf
-#kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
 kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/aio/deploy/recommended.yaml
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
-#kubectl patch deployment ingress-nginx-controller -n ingress-nginx -p='{"spec":{"template":{"spec":{"hostNetwork":true}}}}'
 
 # MetalLB
 kubectl get configmap kube-proxy -n kube-system -o yaml | sed -e "s/strictARP: false/strictARP: true/" | kubectl apply -f - -n kube-system
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/namespace.yaml
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/metallb.yaml
 #kubectl apply -f https://raw.githubusercontent.com/TwistedHardware/k8s/main/address-pool.yaml
+curl https://raw.githubusercontent.com/TwistedHardware/k8s/main/address-pool.yaml | sed -e "s/103.101.44.17\/32/${lb}/" | kubectl apply -f - -n metallb-system
+kubectl patch svc ingress-nginx-controller -n ingress-nginx -p='{"spec":{"externalTrafficPolicy":"Cluster"}}'
 
 # create a user for dashboard
 kubectl apply -f https://raw.githubusercontent.com/TwistedHardware/k8s/main/dashboard-adminuser.yaml

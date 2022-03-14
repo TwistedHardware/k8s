@@ -101,7 +101,8 @@ echo "Creating Kubernetes Cluster"
 kubeadm init --control-plane-endpoint $ip 
 
 export KUBECONFIG=/etc/kubernetes/admin.conf
-kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+#kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/aio/deploy/recommended.yaml
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/baremetal/deploy.yaml
 kubectl patch deployment ingress-nginx-controller -n ingress-nginx -p='{"spec":{"template":{"spec":{"hostNetwork":true}}}}'

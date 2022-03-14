@@ -106,6 +106,7 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/a
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/baremetal/deploy.yaml
 kubectl patch deployment ingress-nginx-controller -n ingress-nginx -p='{"spec":{"template":{"spec":{"hostNetwork":true}}}}'
 
+# create a user for dashboard
 kubectl apply -f https://raw.githubusercontent.com/TwistedHardware/k8s/main/dashboard-adminuser.yaml
 token=$(kubectl -n kubernetes-dashboard get secret $(kubectl -n kubernetes-dashboard get sa/admin-user -o jsonpath="{.secrets[0].name}") -o go-template="{{.data.token | base64decode}}")
 echo -e "\n Your token for Kubernetes Dashboard:\n\n"

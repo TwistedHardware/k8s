@@ -5,6 +5,7 @@ GREEN="32"
 BOLDGREEN="\e[1;${GREEN}m"
 BOLDRED="\e[1;${RED}m"
 ITALICRED="\e[3;${RED}m"
+BOLD="\e[1;0m"
 ENDCOLOR="\e[0m"
 
 if [ "$EUID" -ne 0 ]
@@ -108,13 +109,14 @@ sudo apt-mark hold kubelet kubeadm kubectl
 if [[ "$newcluster" != 'y' ]]
 then
   echo -e "\n${BOLDGREEN}Setup is complete. Now you can join the cluster${ENDCOLOR}"
-  echo -e "To get the join command, run this command on control plane:"
+  echo -e "\n${BOLD}To get the join command, run this command on control plane:${ENDCOLOR}"
   echo -e "sudo kubeadm token create --print-join-command"
-  echo -e "\n\nIf this is going to be a control plane node, first, run this command on an existing control plane node:\nsudo kubeadm init phase upload-certs --upload-certs"
-  echo -e "\nThen, get the key from the first command and run this command on a control plane node:"
+  echo -e "\n${BOLD}If this is going to be a control plane node, first, run this command on an existing control plane node:${ENDCOLOR}"
+  echo -e "sudo kubeadm init phase upload-certs --upload-certs"
+  echo -e "\n${BOLD}Get the key from the previous command and run this command on a control plane node:${ENDCOLOR}"
   echo -e "sudo kubeadm token create --print-join-command --certificate-key ${BOLDRED}{KEY}${ENDCOLOR}"
-  echo -e "\nGet the join command and run it here"
-  echo -e "\nIf this is a master plane and you want to run work load on this node, you have to untaint the node from master taint"
+  echo -e "\n${BOLD}Get the join command and run it here${ENDCOLOR}"
+  echo -e "\n${BOLD}If this is a master plane and you want to run work load on this node, you have to untaint the node from master taint${ENDCOLOR}"
   echo -e "kubectl taint node ${hostname} node-role.kubernetes.io/master-"
   exit
 fi

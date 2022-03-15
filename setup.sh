@@ -39,38 +39,42 @@ do
     read -p "Are you creating a new cluster? [y/n]: " newcluster
 done 
 
-# find the right IP for the cluster
-read -a ipList <<< $(hostname -I)
-
-for i in "${!ipList[@]}"
-do
-  index=$(($i+1));
-  echo -e "${index}: ${ipList[$i]}"
-   # do whatever on "$i" here
-done
-read -p "What is the IP that will used to k8s API? [1]: " ip
-
-if [[ "$ip" == '' ]]
+if [[ "$newcluster" == 'y' ]]
 then
-  ip=1
+  # find the right IP for the cluster
+  read -a ipList <<< $(hostname -I)
+
+  for i in "${!ipList[@]}"
+  do
+    index=$(($i+1));
+    echo -e "${index}: ${ipList[$i]}"
+     # do whatever on "$i" here
+  done
+  read -p "What is the IP that will used to k8s API? [1]: " ip
+
+  if [[ "$ip" == '' ]]
+  then
+    ip=1
+  fi
+
+  ip=$((ip-1))
+  ip="${ipList[$ip]}"
+
+  read -p "Enter a load balancer IP range [103.101.44.17/32]: " lb
+
+  if [[ "$lb" == '' ]]
+  then
+    lb="103.101.44.17/32"
+  fi
+
+  #echo Your Hostname: $hostname
+  #echo K8s API IP: $ip
+  #echo Load Balaner IP Range: $lb
+  #echo "Create new Cluster: $newcluster"
+
+  lb=$(echo $lb | sed -e "s/\//\\\\\//")
 fi
 
-ip=$((ip-1))
-ip="${ipList[$ip]}"
-
-read -p "Enter a load balancer IP range [103.101.44.17/32]: " lb
-
-if [[ "$lb" == '' ]]
-then
-  lb="103.101.44.17/32"
-fi
-
-echo Your Hostname: $hostname
-echo K8s API IP: $ip
-echo Load Balaner IP Range: $lb
-echo "Create new Cluster: $newcluster"
-
-lb=$(echo $lb | sed -e "s/\//\\\\\//")
 
 if [[ "$hostname" != '' ]]
 then
@@ -78,6 +82,7 @@ then
   sudo hostname $hostname
 fi
 
+hostname=$(cat /etc/hostname)
 
 echo -e "\n${BOLDGREEN}Installing Docker...${ENDCOLOR}"
 sudo apt-get -qq install -y ca-certificates curl gnupg lsb-release
@@ -98,9 +103,19 @@ sudo apt-get -qq update
 sudo apt-get -qq install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
 
-if [[ "$newcluster" == 'n' ]]
+# If you are not creating a new cluster, we can stop here
+# Just show some instructions for joining an existing cluster
+if [[ "$newcluster" != 'y' ]]
 then
-  echo Setup is complete. Now you can join the cluster
+  echo -e "\n${BOLDGREEN}Setup is complete. Now you can join the cluster${ENDCOLOR}"
+  echo -e "To get the join command, run this command on control plane:"
+  echo -e "sudo kubeadm token create --print-join-command"
+  echo -e "\n\nIf this is going to be a control plane node, first, run this command on an existing control plane node:\nsudo kubeadm init phase upload-certs --upload-certs"
+  echo -e "\nThen, get the key from the first command and run this command on a control plane node:"
+  echo -e "sudo kubeadm token create --print-join-command --certificate-key ${BOLDRED}{KEY}${ENDCOLOR}"
+  echo -e "\nGet the join command and run it here"
+  echo -e "\nIf this is a master plane and you want to run work load on this node, you have to untaint the node from master taint"
+  echo -e "kubectl taint node ${hostname} node-role.kubernetes.io/master-"
   exit
 fi
 
@@ -108,17 +123,22 @@ echo -e "\n${BOLDGREEN}Creating Kubernetes Cluster...${ENDCOLOR}"
 kubeadm init --control-plane-endpoint $ip --pod-network-cidr=10.17.0.0/16 --service-cidr=10.18.0.0/16
 
 export KUBECONFIG=/etc/kubernetes/admin.conf
+
+# Pod Network Add-On
 kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+
+# Dashboard
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/aio/deploy/recommended.yaml
+
+# Ingress Controller
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+kubectl patch svc ingress-nginx-controller -n ingress-nginx -p='{"spec":{"externalTrafficPolicy":"Cluster"}}'
 
 # MetalLB
 kubectl get configmap kube-proxy -n kube-system -o yaml | sed -e "s/strictARP: false/strictARP: true/" | kubectl apply -f - -n kube-system
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/namespace.yaml
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/metallb.yaml
-#kubectl apply -f https://raw.githubusercontent.com/TwistedHardware/k8s/main/address-pool.yaml
 curl https://raw.githubusercontent.com/TwistedHardware/k8s/main/address-pool.yaml | sed -e "s/103.101.44.17\/32/${lb}/" | kubectl apply -f - -n metallb-system
-kubectl patch svc ingress-nginx-controller -n ingress-nginx -p='{"spec":{"externalTrafficPolicy":"Cluster"}}'
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/metallb.yaml
 
 # create a user for dashboard
 kubectl apply -f https://raw.githubusercontent.com/TwistedHardware/k8s/main/dashboard-adminuser.yaml
@@ -126,3 +146,7 @@ token=$(kubectl -n kubernetes-dashboard get secret $(kubectl -n kubernetes-dashb
 echo -e "\n Your token for Kubernetes Dashboard:\n\n"
 echo $token
 echo -e "\n\n"
+
+# Untaint master
+echo -e "If you want to run this as a standalone node, or you want to run work load on this node, you have to untaint the node from master taint"
+echo -e "kubectl taint node ${hostname} node-role.kubernetes.io/master-"

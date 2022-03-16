@@ -149,7 +149,7 @@ kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manif
 
 # Longhorn
 mount --make-shared /
-apt-get install nfs-common
+apt-get -qq install -y  nfs-common
 kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.2.3/deploy/longhorn.yaml
 
 # create a user for dashboard

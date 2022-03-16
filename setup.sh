@@ -94,7 +94,7 @@ sudo apt-get -qq install docker-ce docker-ce-cli containerd.io
 # change cgroup of docker to systemd
 sed -i 's/ExecStart=\/usr\/bin\/dockerd -H fd:\/\/ --containerd=\/run\/containerd\/containerd.sock/ExecStart=\/usr\/bin\/dockerd -H fd:\/\/ --containerd=\/run\/containerd\/containerd.sock --exec-opt native.cgroupdriver=systemd/' /usr/lib/systemd/system/docker.service
 # Enable Mount Propagation
-sed -i 's/\[Service\]/\[Service\]\nMountFlags=shared\n/'
+sed -i 's/\[Service\]/\[Service\]\nMountFlags=shared\n/' /usr/lib/systemd/system/docker.service
 sudo systemctl daemon-reload
 systemctl restart docker
 

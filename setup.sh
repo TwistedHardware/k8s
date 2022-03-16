@@ -98,6 +98,10 @@ sed -i 's/\[Service\]/\[Service\]\nMountFlags=shared\n/' /usr/lib/systemd/system
 sudo systemctl daemon-reload
 systemctl restart docker
 
+# Mount Probagation & NFS
+mount --make-shared /
+apt-get -qq install -y  nfs-common
+
 echo -e "\n${BOLDGREEN}Installing Kubernetes...${ENDCOLOR}"
 sudo apt-get -qq install -y apt-transport-https ca-certificates curl
 sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
@@ -148,8 +152,6 @@ curl https://raw.githubusercontent.com/TwistedHardware/k8s/main/address-pool.yam
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/metallb.yaml
 
 # Longhorn
-mount --make-shared /
-apt-get -qq install -y  nfs-common
 kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.2.3/deploy/longhorn.yaml
 
 # create a user for dashboard

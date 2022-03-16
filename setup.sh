@@ -129,7 +129,7 @@ kubeadm init --control-plane-endpoint $ip --pod-network-cidr=10.17.0.0/16 --serv
 export KUBECONFIG=/etc/kubernetes/admin.conf
 
 # Pod Network Add-On
-kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
 
 # Dashboard
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/aio/deploy/recommended.yaml

@@ -91,8 +91,10 @@ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --batch --yes
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt-get -qq update
 sudo apt-get -qq install docker-ce docker-ce-cli containerd.io
-# change cgroup of docker to systemd, then restart docker
+# change cgroup of docker to systemd
 sed -i 's/ExecStart=\/usr\/bin\/dockerd -H fd:\/\/ --containerd=\/run\/containerd\/containerd.sock/ExecStart=\/usr\/bin\/dockerd -H fd:\/\/ --containerd=\/run\/containerd\/containerd.sock --exec-opt native.cgroupdriver=systemd/' /usr/lib/systemd/system/docker.service
+# Enable Mount Propagation
+sed -i 's/\[Service\]/\[Service\]\nMountFlags=shared\n/'
 sudo systemctl daemon-reload
 systemctl restart docker
 
@@ -136,11 +138,19 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/a
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
 kubectl patch svc ingress-nginx-controller -n ingress-nginx -p='{"spec":{"externalTrafficPolicy":"Cluster"}}'
 
+# Cert-Manager
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
+
 # MetalLB
 kubectl get configmap kube-proxy -n kube-system -o yaml | sed -e "s/strictARP: false/strictARP: true/" | kubectl apply -f - -n kube-system
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/namespace.yaml
 curl https://raw.githubusercontent.com/TwistedHardware/k8s/main/address-pool.yaml | sed -e "s/103.101.44.17\/32/${lb}/" | kubectl apply -f - -n metallb-system
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/metallb.yaml
+
+# Longhorn
+mount --make-shared /
+apt-get install nfs-common
+kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.2.3/deploy/longhorn.yaml
 
 # create a user for dashboard
 kubectl apply -f https://raw.githubusercontent.com/TwistedHardware/k8s/main/dashboard-adminuser.yaml

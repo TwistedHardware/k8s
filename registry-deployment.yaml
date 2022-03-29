@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: registry
+  # namespace: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: registry
+  # strategy:
+  #   type: Recreate
+  template:
+    metadata:
+      labels:
+        app: registry
+    spec:
+      containers:
+      - name: registry
+        image: registry
+        ports:
+        - containerPort: 80
+        env:
+          - name: REGISTRY_HTTP_ADDR
+            value: "0.0.0.0:80"
+          - name: REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY
+            value: /var/lib/registry
+        volumeMounts:
+          - mountPath: /var/lib/registry
+            name: registry-vol
+      volumes:
+      - name: registry-vol
+        persistentVolumeClaim:
+          claimName: registry-pvc

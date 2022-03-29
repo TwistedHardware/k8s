@@ -93,8 +93,9 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docke
 sudo apt-get -qq update
 sudo apt-get -qq install docker-ce docker-ce-cli containerd.io
 # change cgroup of docker to systemd
-sed -i 's/ExecStart=\/usr\/bin\/dockerd -H fd:\/\/ --containerd=\/run\/containerd\/containerd.sock/ExecStart=\/usr\/bin\/dockerd -H fd:\/\/ --containerd=\/run\/containerd\/containerd.sock --exec-opt native.cgroupdriver=systemd/' /usr/lib/systemd/system/docker.service
+sed -i "s/^ExecStart=\/usr\/bin\/dockerd -H fd:\/\/ --containerd=\/run\/containerd\/containerd.sock$/ExecStart=\/usr\/bin\/dockerd -H fd:\/\/ --containerd=\/run\/containerd\/containerd.sock --exec-opt native.cgroupdriver=systemd/" /usr/lib/systemd/system/docker.service
 # Enable Mount Propagation
+sed -i '/MountFlags=./d' /usr/lib/systemd/system/docker.service
 sed -i 's/\[Service\]/\[Service\]\nMountFlags=shared\n/' /usr/lib/systemd/system/docker.service
 # Prepare private registry
 if [[ "$registery" != '' ]]
@@ -109,6 +110,10 @@ mount --make-shared /
 apt-get -qq install -y  nfs-common
 
 echo -e "\n${BOLDGREEN}Installing Kubernetes...${ENDCOLOR}"
+# Disble swap
+swapoff -a
+sed -i "s/^\/swap/#\/swap/" /etc/fstab
+# Install k8s
 sudo apt-get -qq install -y apt-transport-https ca-certificates curl
 sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
 echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
@@ -138,6 +143,9 @@ kubeadm init --control-plane-endpoint $ip # --pod-network-cidr=10.17.0.0/16 --se
 
 export KUBECONFIG=/etc/kubernetes/admin.conf
 
+# Enable workload on master
+kubectl taint node ${hostname} node-role.kubernetes.io/master-
+
 # Pod Network Add-On
 kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
 
@@ -159,6 +167,12 @@ kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manif
 
 # Longhorn
 kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.2.3/deploy/longhorn.yaml
+
+# Install registry
+#kubectl apply -f https://raw.githubusercontent.com/TwistedHardware/k8s/main/registry-pvc.yaml
+#kubectl apply -f https://raw.githubusercontent.com/TwistedHardware/k8s/main/registry-deployment.yaml
+#kubectl apply -f https://raw.githubusercontent.com/TwistedHardware/k8s/main/registry-service.yaml
+#kubectl apply -f https://raw.githubusercontent.com/TwistedHardware/k8s/main/registry-ingress.yaml
 
 # create a user for dashboard
 kubectl apply -f https://raw.githubusercontent.com/TwistedHardware/k8s/main/dashboard-adminuser.yaml

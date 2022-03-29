@@ -134,7 +134,7 @@ then
 fi
 
 echo -e "\n${BOLDGREEN}Creating Kubernetes Cluster...${ENDCOLOR}"
-kubeadm init --control-plane-endpoint $ip --pod-network-cidr=10.17.0.0/16 --service-cidr=10.18.0.0/16
+kubeadm init --control-plane-endpoint $ip # --pod-network-cidr=10.17.0.0/16 --service-cidr=10.18.0.0/16
 
 export KUBECONFIG=/etc/kubernetes/admin.conf
 

@@ -76,6 +76,7 @@ then
   lb=$(echo $lb | sed -e "s/\//\\\\\//")
 fi
 
+read -p "What is the domain name of your registery [hub.docker.com]: " registery
 
 if [[ "$hostname" != '' ]]
 then
@@ -95,6 +96,11 @@ sudo apt-get -qq install docker-ce docker-ce-cli containerd.io
 sed -i 's/ExecStart=\/usr\/bin\/dockerd -H fd:\/\/ --containerd=\/run\/containerd\/containerd.sock/ExecStart=\/usr\/bin\/dockerd -H fd:\/\/ --containerd=\/run\/containerd\/containerd.sock --exec-opt native.cgroupdriver=systemd/' /usr/lib/systemd/system/docker.service
 # Enable Mount Propagation
 sed -i 's/\[Service\]/\[Service\]\nMountFlags=shared\n/' /usr/lib/systemd/system/docker.service
+# Prepare private registry
+if [[ "$registery" != '' ]]
+then
+  echo -e '{\n  "insecure-registries": ["${registry}"],\n  "registry-mirrors": ["http://${registry}"]\n}'
+fi
 sudo systemctl daemon-reload
 systemctl restart docker
 

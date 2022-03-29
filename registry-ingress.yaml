@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-registry
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+  #   cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  # tls:
+  # - hosts:
+  #   - registry.integranet.ph
+  #   secretName: nginx-tls
+  rules:
+    - host: registry.integranet.ph
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: registry
+                port:
+                  number: 80
+  ingressClassName: nginx

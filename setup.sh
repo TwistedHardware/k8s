@@ -100,7 +100,7 @@ sed -i 's/\[Service\]/\[Service\]\nMountFlags=shared\n/' /usr/lib/systemd/system
 # Prepare private registry
 if [[ "$registry" != '' ]]
 then
-  echo -e '{\n  "insecure-registries": ["${registry}"],\n  "registry-mirrors": ["http://${registry}"]\n}' > /etc/docker/daemon.json
+  echo -e "{\n  \"insecure-registries\": [\"${registry}\"],\n  \"registry-mirrors\": [\"http://${registry}\"]\n}" > /etc/docker/daemon.json
 fi
 sudo systemctl daemon-reload
 systemctl restart docker

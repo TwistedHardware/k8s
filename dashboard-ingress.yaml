@@ -6,7 +6,7 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-    ingress.kubernetes.io/rewrite-target: /
+    ingress.kubernetes.io/rewrite-target: /$1
 spec:
   tls:
   - hosts:
@@ -16,7 +16,7 @@ spec:
     - host: k8s.integranet.ph
       http:
         paths:
-          - path: /dashboard/
+          - path: /dashboard/(.*)
             pathType: Prefix
             backend:
               service:

@@ -76,7 +76,7 @@ then
   lb=$(echo $lb | sed -e "s/\//\\\\\//")
 fi
 
-read -p "What is the domain name of your registery [hub.docker.com]: " registery
+read -p "What is the domain name of your registry [hub.docker.com]: " registry
 
 if [[ "$hostname" != '' ]]
 then
@@ -98,7 +98,7 @@ sed -i "s/^ExecStart=\/usr\/bin\/dockerd -H fd:\/\/ --containerd=\/run\/containe
 sed -i '/MountFlags=./d' /usr/lib/systemd/system/docker.service
 sed -i 's/\[Service\]/\[Service\]\nMountFlags=shared\n/' /usr/lib/systemd/system/docker.service
 # Prepare private registry
-if [[ "$registery" != '' ]]
+if [[ "$registry" != '' ]]
 then
   echo -e '{\n  "insecure-registries": ["${registry}"],\n  "registry-mirrors": ["http://${registry}"]\n}' > /etc/docker/daemon.json
 fi

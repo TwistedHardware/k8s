@@ -31,6 +31,12 @@ To add a worker nodes:
 
 [Read this](new-worker.md)
 
+## Remove a node
+
+To remove a node from the cluster:
+
+[Read this](remove-node.md)
+
 ## Dashboard
 
 To see the dashboard, run this command (make sure you [configured](#configure-kubectl) `kubectl` on your PC):

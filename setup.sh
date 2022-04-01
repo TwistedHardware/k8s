@@ -51,15 +51,12 @@ then
     echo -e "${index}: ${ipList[$i]}"
      # do whatever on "$i" here
   done
-  read -p "What is the IP that will used to k8s API? [1]: " ip
+  read -p "What is the IP/DNS that will used to k8s API? [${ipList[0]}]: " ip
 
   if [[ "$ip" == '' ]]
   then
-    ip=1
+    ip="${ipList[0]}"
   fi
-
-  ip=$((ip-1))
-  ip="${ipList[$ip]}"
 
   read -p "Enter a load balancer IP range [103.101.44.17/32]: " lb
 

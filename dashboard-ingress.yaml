@@ -11,10 +11,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - k8s.integranet.ph
+    - cloud.integranet.ph
     secretName: nginx-tls
   rules:
-    - host: k8s.integranet.ph
+    - host: cloud.integranet.ph
       http:
         paths:
           - path: /dashboard/(.*)

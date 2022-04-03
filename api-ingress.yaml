@@ -20,5 +20,5 @@ spec:
               service:
                 name: kubernetes
                 port:
-                  number: 80
+                  number: 6443
   ingressClassName: nginx

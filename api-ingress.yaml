@@ -5,6 +5,7 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: "0"
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.org/listen-ports-ssl: "6443"
 spec:
   tls:
   - hosts:

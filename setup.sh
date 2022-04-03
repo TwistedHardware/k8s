@@ -152,6 +152,7 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/a
 # Ingress Controller
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
 kubectl patch svc ingress-nginx-controller -n ingress-nginx -p='{"spec":{"externalTrafficPolicy":"Cluster"}}'
+kubectl patch deployment ingress-nginx-controller -n ingress-nginx -p='{"spec":{"replicas":2}}'
 
 # Cert-Manager
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml

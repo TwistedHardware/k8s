@@ -7,11 +7,12 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     nginx.org/listen-ports-ssl: "6443"
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
 spec:
-  tls:
-  - hosts:
-    - cloudapi.integranet.ph
-    secretName: nginx-tls
+  #tls:
+  #- hosts:
+  #  - cloudapi.integranet.ph
+  #  secretName: nginx-tls
   rules:
     - host: cloudapi.integranet.ph
       http:

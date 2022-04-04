@@ -16,3 +16,4 @@ spec:
   - port: 6443
     targetPort: 6443
   type: LoadBalancer
+  externalTrafficPolicy: Cluster

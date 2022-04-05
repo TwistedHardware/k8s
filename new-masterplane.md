@@ -9,7 +9,7 @@ sudo kubeadm init phase upload-certs --upload-certs
 Copy the key and use it this command:
 
 ```
-kubeadm token create --print-join-command --certificate-key {KEY}
+sudo kubeadm token create --print-join-command --certificate-key {KEY}
 ```
 
 Copy the command you got from the previous step and ssh into the new node and run the command with `sudo`:

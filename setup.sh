@@ -107,6 +107,9 @@ fi
 systemctl daemon-reload
 systemctl restart docker
 
+systemctl daemon-reload
+systemctl restart containerd.service
+
 # Mount Probagation & NFS
 mount --make-shared /
 apt-get -qq install -y  nfs-common

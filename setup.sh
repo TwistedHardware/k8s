@@ -8,6 +8,8 @@ ITALICRED="\e[3;${RED}m"
 BOLDWHITE="\e[1;29m"
 ENDCOLOR="\e[0m"
 
+KUBEVER="1.24.0-00"
+
 if [ "$EUID" -ne 0 ]
   then exec sudo "$0" "$@"; exit 0
 fi
@@ -24,6 +26,7 @@ echo -e ""
 echo -e "    ┌────────────────────────────┐"
 echo -e "    │                            │"
 echo -e "    │    ${BOLDGREEN}Kubernets Node Setup${ENDCOLOR}    │"
+echo -e "    │     ${BOLDGREEN}VERSION ${KUBEVER} ${ENDCOLOR}     │"
 echo -e "    │                            │"
 echo -e "    │ This will setup your node  │"
 echo -e "    │ to use in as a kubernetes  │"
@@ -84,13 +87,15 @@ fi
 hostname=$(cat /etc/hostname)
 
 echo -e "\n${BOLDGREEN}Installing Docker...${ENDCOLOR}"
-sudo apt-get -qq install -y ca-certificates curl gnupg lsb-release
+apt-get -qq install -y ca-certificates curl gnupg lsb-release
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-sudo apt-get -qq update
-sudo apt-get -qq install docker-ce docker-ce-cli containerd.io
+apt-get -qq update
+apt-get -qq install docker-ce docker-ce-cli containerd.io
 # change cgroup of docker to systemd
-sed -i "s/^ExecStart=\/usr\/bin\/dockerd -H fd:\/\/ --containerd=\/run\/containerd\/containerd.sock$/ExecStart=\/usr\/bin\/dockerd -H fd:\/\/ --containerd=\/run\/containerd\/containerd.sock --exec-opt native.cgroupdriver=systemd/" /usr/lib/systemd/system/docker.service
+#sed -i "s/^ExecStart=\/usr\/bin\/dockerd -H fd:\/\/ --containerd=\/run\/containerd\/containerd.sock$/ExecStart=\/usr\/bin\/dockerd -H fd:\/\/ --containerd=\/run\/containerd\/containerd.sock --exec-opt native.cgroupdriver=systemd/" /usr/lib/systemd/system/docker.service
+# Enable CRI for ContainerD
+sed -i 's/^disabled_plugins = \["cri"\]$/disabled_plugins = \[\]/' /etc/containerd/config.toml
 # Enable Mount Propagation
 sed -i '/MountFlags=./d' /usr/lib/systemd/system/docker.service
 sed -i 's/\[Service\]/\[Service\]\nMountFlags=shared\n/' /usr/lib/systemd/system/docker.service
@@ -99,7 +104,7 @@ if [[ "$registry" != '' ]]
 then
   echo -e "{\n  \"insecure-registries\": [\"${registry}\"],\n  \"registry-mirrors\": [\"http://${registry}\"]\n}" > /etc/docker/daemon.json
 fi
-sudo systemctl daemon-reload
+systemctl daemon-reload
 systemctl restart docker
 
 # Mount Probagation & NFS
@@ -111,12 +116,12 @@ echo -e "\n${BOLDGREEN}Installing Kubernetes...${ENDCOLOR}"
 swapoff -a
 sed -i "s/^\/swap/#\/swap/" /etc/fstab
 # Install k8s
-sudo apt-get -qq install -y apt-transport-https ca-certificates curl
-sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+apt-get -qq install -y apt-transport-https ca-certificates curl
+curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
 echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-sudo apt-get -qq update
-sudo apt-get -qq install -y kubelet kubeadm kubectl
-sudo apt-mark hold kubelet kubeadm kubectl
+apt-get -qq update
+apt-get -qq install -y kubelet=${KUBEVER} kubeadm=${KUBEVER} kubectl=${KUBEVER}
+apt-mark hold kubelet kubeadm kubectl
 
 # If you are not creating a new cluster, we can stop here
 # Just show some instructions for joining an existing cluster
@@ -132,6 +137,7 @@ then
   echo -e "\n${BOLDWHITE}Get the join command and run it here${ENDCOLOR}"
   echo -e "\n${BOLDWHITE}If this is a master plane and you want to run work load on this node, you have to untaint the node from master taint${ENDCOLOR}"
   echo -e "kubectl taint node ${hostname} node-role.kubernetes.io/master-"
+  echo -e "Edit /etc/cni/net.d/10-weave.conflist and make \"cniVersion\": \"0.2.0\""
   exit
 fi
 

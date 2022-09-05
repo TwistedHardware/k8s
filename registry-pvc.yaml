@@ -3,7 +3,7 @@ apiVersion: v1
 metadata:
   name: registry-pvc
 spec:
-  storageClassName: default
+  storageClassName: ssd
   accessModes:
     - ReadWriteMany
   resources:

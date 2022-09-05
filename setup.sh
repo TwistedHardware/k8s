@@ -167,12 +167,12 @@ kubectl patch deployment ingress-nginx-controller -n ingress-nginx -p='{"spec":{
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
 
 # MetalLB
-kubectl get configmap kube-proxy -n kube-system -o yaml | sed -e "s/strictARP: false/strictARP: true/" | kubectl apply -f - -n kube-system
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/namespace.yaml
-curl https://raw.githubusercontent.com/TwistedHardware/k8s/main/address-pool.yaml | sed -e "s/103.101.44.17\/32/${lb}/" | kubectl apply -f - -n metallb-system
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/metallb.yaml
+#kubectl get configmap kube-proxy -n kube-system -o yaml | sed -e "s/strictARP: false/strictARP: true/" | kubectl apply -f - -n kube-system
+#kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/namespace.yaml
+#curl https://raw.githubusercontent.com/TwistedHardware/k8s/main/address-pool.yaml | sed -e "s/103.101.44.17\/32/${lb}/" | kubectl apply -f - -n metallb-system
+#kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/metallb.yaml
 # set the load balancer to use default address pool
-kubectl patch services ingress-nginx-controller -n ingress-nginx -p='{"metadata":{"annotations":{"metallb.universe.tf/address-pool":"default"}}}'
+#kubectl patch services ingress-nginx-controller -n ingress-nginx -p='{"metadata":{"annotations":{"metallb.universe.tf/address-pool":"default"}}}'
 
 # Longhorn
 kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.2.3/deploy/longhorn.yaml
@@ -185,10 +185,10 @@ kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.2.3/depl
 
 # create a user for dashboard
 kubectl apply -f https://raw.githubusercontent.com/TwistedHardware/k8s/main/dashboard-adminuser.yaml
-token=$(kubectl -n kubernetes-dashboard get secret $(kubectl -n kubernetes-dashboard get sa/admin-user -o jsonpath="{.secrets[0].name}") -o go-template="{{.data.token | base64decode}}")
-echo -e "\n Your token for Kubernetes Dashboard:\n\n"
-echo $token
-echo -e "\n\n"
+#token=$(kubectl -n kubernetes-dashboard get secret $(kubectl -n kubernetes-dashboard get sa/admin-user -o jsonpath="{.secrets[0].name}") -o go-template="{{.data.token | base64decode}}")
+#echo -e "\n Your token for Kubernetes Dashboard:\n\n"
+#echo $token
+#echo -e "\n\n"
 
 # Untaint master
 echo -e "If you want to run this as a standalone node, or you want to run work load on this node, you have to untaint the node from master taint"

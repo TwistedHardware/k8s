@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubevip
+  namespace: kube-system
+data:
+  cidr-default: 103.101.44.20-103.101.44.25      # CIDR-based IP range for use in the default Namespace

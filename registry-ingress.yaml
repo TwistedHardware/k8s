@@ -6,10 +6,10 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-body-size: "0"
   #   cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
-  # tls:
-  # - hosts:
-  #   - registry.integranet.ph
-  #   secretName: nginx-tls
+  tls:
+  - hosts:
+    - registry.integranet.ph
+    secretName: nginx-tls
   rules:
     - host: registry.integranet.ph
       http:

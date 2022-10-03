@@ -8,7 +8,7 @@ ITALICRED="\e[3;${RED}m"
 BOLDWHITE="\e[1;29m"
 ENDCOLOR="\e[0m"
 
-KUBEVER="1.24.1-00"
+KUBEVER="1.24.5-00"
 
 if [ "$EUID" -ne 0 ]
   then exec sudo "$0" "$@"; exit 0

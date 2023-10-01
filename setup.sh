@@ -8,7 +8,7 @@ ITALICRED="\e[3;${RED}m"
 BOLDWHITE="\e[1;29m"
 ENDCOLOR="\e[0m"
 
-KUBEVER="1.24.5-00"
+KUBEVER="1.28.2-1.1"
 
 if [ "$EUID" -ne 0 ]
   then exec sudo "$0" "$@"; exit 0
@@ -87,11 +87,13 @@ fi
 hostname=$(cat /etc/hostname)
 
 echo -e "\n${BOLDGREEN}Installing Docker...${ENDCOLOR}"
-apt-get -qq install -y ca-certificates curl gnupg lsb-release
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+apt-get update
+apt-get -qq install -y ca-certificates curl GnuPG
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --batch --yes --dearmor -o /etc/apt/keyrings/docker.gpg
+echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 apt-get -qq update
-apt-get -qq install docker-ce docker-ce-cli containerd.io
+apt-get -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 # change cgroup of docker to systemd
 #sed -i "s/^ExecStart=\/usr\/bin\/dockerd -H fd:\/\/ --containerd=\/run\/containerd\/containerd.sock$/ExecStart=\/usr\/bin\/dockerd -H fd:\/\/ --containerd=\/run\/containerd\/containerd.sock --exec-opt native.cgroupdriver=systemd/" /usr/lib/systemd/system/docker.service
 # Enable CRI for ContainerD
@@ -106,24 +108,22 @@ then
 fi
 systemctl daemon-reload
 systemctl restart docker
-
-systemctl daemon-reload
 systemctl restart containerd.service
 
 # Mount Probagation & NFS
 mount --make-shared /
-apt-get -qq install -y  nfs-common
+#apt-get -qq install -y  nfs-common
 
 echo -e "\n${BOLDGREEN}Installing Kubernetes...${ENDCOLOR}"
 # Disble swap
 swapoff -a
 sed -i "s/^\/swap/#\/swap/" /etc/fstab
 # Install k8s
-apt-get -qq install -y apt-transport-https ca-certificates curl
-curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
-echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-apt-get -qq update
-apt-get -qq install -y kubelet=${KUBEVER} kubeadm=${KUBEVER} kubectl=${KUBEVER}
+apt-get -y install apt-transport-https ca-certificates curl
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+apt-get -y update
+apt-get -y install kubelet=${KUBEVER} kubeadm=${KUBEVER} kubectl=${KUBEVER}
 apt-mark hold kubelet kubeadm kubectl
 
 # If you are not creating a new cluster, we can stop here
@@ -150,10 +150,10 @@ kubeadm init --control-plane-endpoint $ip # --pod-network-cidr=10.17.0.0/16 --se
 export KUBECONFIG=/etc/kubernetes/admin.conf
 
 # Enable workload on master
-kubectl taint node ${hostname} node-role.kubernetes.io/master-
+kubectl taint node ${hostname} node-role.kubernetes.io/control-plane-
 
 # Pod Network Add-On
-kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
 
 # Dashboard
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/aio/deploy/recommended.yaml
@@ -164,7 +164,7 @@ kubectl patch svc ingress-nginx-controller -n ingress-nginx -p='{"spec":{"extern
 kubectl patch deployment ingress-nginx-controller -n ingress-nginx -p='{"spec":{"replicas":2}}'
 
 # Cert-Manager
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.1/cert-manager.yaml
 
 # MetalLB
 #kubectl get configmap kube-proxy -n kube-system -o yaml | sed -e "s/strictARP: false/strictARP: true/" | kubectl apply -f - -n kube-system
@@ -175,7 +175,7 @@ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/
 #kubectl patch services ingress-nginx-controller -n ingress-nginx -p='{"metadata":{"annotations":{"metallb.universe.tf/address-pool":"default"}}}'
 
 # Longhorn
-kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.2.3/deploy/longhorn.yaml
+#kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.2.3/deploy/longhorn.yaml
 
 # Install registry
 #kubectl apply -f https://raw.githubusercontent.com/TwistedHardware/k8s/main/registry-pvc.yaml
@@ -192,4 +192,4 @@ kubectl apply -f https://raw.githubusercontent.com/TwistedHardware/k8s/main/dash
 
 # Untaint master
 echo -e "If you want to run this as a standalone node, or you want to run work load on this node, you have to untaint the node from master taint"
-echo -e "kubectl taint node ${hostname} node-role.kubernetes.io/master-"
+echo -e "kubectl taint node ${hostname} node-role.kubernetes.io/control-plane-"
